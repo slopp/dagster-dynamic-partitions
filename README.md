@@ -7,12 +7,19 @@ This project demonstrates an ELT pipeline:
 
 3. The raw data is then summarized using 2 dbt models. These two summary tables are re-created for any update to the plant data table so they always have the latest data incorporating all of the partitions.
 
+The entire data platform, including the state of each partition is easily viewable in the global asset graph:
+
+![](dynamic_partitions_graph.png)
+
 The files can be processed automatically using a Dagster sensor. The first time the sensor is turned on it will process all existing files. As new files are added to the data directory, the sensor will launch runs to process the new files:
+
+![](dynamic_partitions_sensor.png)
 
 The files can be processed manually using a Dagster backfill:
 
+![](dynamic_partitions_backfill.png)
 
-The entire data platform, including the state of each partition is easily viewable in the global asset graph:
+
 
 ## Experimental Features
 
