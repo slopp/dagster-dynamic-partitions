@@ -1,5 +1,7 @@
 name: Serverless Prod Deployment
 on:
+  schedule:
+    - cron: '0 8 * * thu'
   push:
     branches:
       - "main"
@@ -9,56 +11,51 @@ concurrency:
   group: ${{ github.ref }}
   cancel-in-progress: true
 env:
-  DAGSTER_CLOUD_URL: ${{ secrets.DAGSTER_CLOUD_URL }}
+  DAGSTER_CLOUD_URL: "http://hooli-demo.canary.dagster.cloud"
   DAGSTER_CLOUD_API_TOKEN: ${{ secrets.DAGSTER_CLOUD_API_TOKEN }}
-  ENABLE_FAST_DEPLOYS: 'false'
+  
 
 jobs:
-  dagster_cloud_default_deploy:
-    name: Dagster Serverless Deploy
+  parse_workspace:
+    name: Parse Workspace
     runs-on: ubuntu-latest
     outputs:
       build_info: ${{ steps.parse-workspace.outputs.build_info }}
-    
+
     steps:
       - name: Parse cloud workspace
-        if: env.ENABLE_FAST_DEPLOYS != 'true'
         id: parse-workspace
         uses: dagster-io/dagster-cloud-action/actions/utils/parse_workspace@v0.1
         with:
           dagster_cloud_file: dagster_cloud.yaml
-
-      - name: Checkout
-        if: env.ENABLE_FAST_DEPLOYS == 'true'
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ github.head_ref }}
-          path: project-repo
-          
-      - name: Build and deploy Python executable
-        if: env.ENABLE_FAST_DEPLOYS == 'true'
-        uses: dagster-io/dagster-cloud-action/actions/build_deploy_python_executable@pex-v0.1
-        with:
-          dagster_cloud_file: "$GITHUB_WORKSPACE/project-repo/dagster_cloud.yaml"
-          build_output_dir: "$GITHUB_WORKSPACE/build"
-          python_version: "3.8"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+  
   dagster_cloud_docker_deploy:
     name: Dagster Serverless Docker Deploy
     runs-on: ubuntu-latest
-    if: needs.dagster_cloud_default_deploy.outputs.build_info
-    needs: dagster_cloud_default_deploy
+    needs: parse_workspace
     strategy:
       fail-fast: false
       matrix:
-        location: ${{ fromJSON(needs.dagster_cloud_default_deploy.outputs.build_info) }}
+        location: ${{ fromJSON(needs.parse_workspace.outputs.build_info) }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
           ref: ${{ github.head_ref }}
+      - name: Checkout dagster master
+        uses: actions/checkout@v3
+        with:
+          repository: dagster-io/dagster
+          path: ./dagster
+
+      - name: Checkout dagster-cloud master from internal
+        shell: bash
+        env:
+          PAT: ${{ secrets.DAGSTER_INTERNAL_CLONE_PAT }}
+        run: |
+          git clone "https://slopp:${PAT}@github.com/dagster-io/internal"
+
       - name: Build and deploy to Dagster Cloud serverless
         uses: dagster-io/dagster-cloud-action/actions/serverless_prod_deploy@v0.1
         with:
@@ -67,6 +64,7 @@ jobs:
           # Uncomment to pass through Github Action secrets as a JSON string of key-value pairs
           # env_vars: ${{ toJson(secrets) }}
           organization_id: ${{ secrets.ORGANIZATION_ID }}
+          checkout_repo: 'false'
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
