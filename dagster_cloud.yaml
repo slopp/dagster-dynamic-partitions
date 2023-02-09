@@ -1,0 +1,4 @@
+locations:
+  - location_name: dynamic_partitions
+    code_source:
+      package_name: dagster_project

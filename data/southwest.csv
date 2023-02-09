@@ -1,0 +1,4 @@
+plant,date,part_number,quantity
+taos,2023-01-13,1,310
+phoenix,2023-01-13,1,205
+tuscon,2023-01-13,35,100
