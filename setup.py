@@ -10,7 +10,8 @@ if __name__ == "__main__":
             "dagster-dbt",
             "dagster-duckdb",
             "dagster-cloud",
-            "dbt-duckdb"
+            "dbt-duckdb",
+            "pandas"
         ],
         extras_require={"dev": ["dagit", "pytest"]},
     )
