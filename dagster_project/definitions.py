@@ -36,8 +36,8 @@ resources =  {
 
 
 # --- Assets
-#dynamic_regions = DynamicPartitionsDefinition(name="dynamic_regions")
-dynamic_regions = StaticPartitionsDefinition(["northeast","southwest","northeast_oopsie"])
+dynamic_regions = DynamicPartitionsDefinition(name="dynamic_regions")
+#dynamic_regions = StaticPartitionsDefinition(["northeast","southwest","northeast_oopsie"])
 
 @asset(
     io_manager_key="warehouse_io_manager",
@@ -93,10 +93,10 @@ def watch_for_new_plant_data(context):
 
     for f in new_files:
         partition_key=f.replace(".csv", "")
-        #dynamic_regions.add_partitions([partition_key], context.instance)
+        dynamic_regions.add_partitions([partition_key], context.instance)
         run_requests.append(
             asset_job.run_request_for_partition(
-                partition_key=partition_key #, instance=context.instance
+                partition_key=partition_key, instance=context.instance
             )
         )
     
