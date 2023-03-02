@@ -2,11 +2,10 @@ import os
 from typing import Optional
 
 import pandas as pd
-from dagster._config.structured_config import Resource, StructuredConfigIOManager
-
+from dagster._config.structured_config import ConfigurableResource, ConfigurableIOManager
 import duckdb
 
-class FileReader(Resource):
+class FileReader(ConfigurableResource):
     """Reads CSVs from a specific folder"""
 
     directory: Optional[str]
@@ -15,7 +14,7 @@ class FileReader(Resource):
         return pd.read_csv(f"{self.directory}/{file}")
 
 
-class ErrorWriter(Resource):
+class ErrorWriter(ConfigurableResource):
     """Writes failed dataframes to a specific folder"""
 
     directory: Optional[str]
@@ -24,7 +23,7 @@ class ErrorWriter(Resource):
         return obj.to_csv(f"{self.directory}/{file}")
 
 
-class DirectoryLister(Resource):
+class DirectoryLister(ConfigurableResource):
     """Lists files in a directory"""
 
     directory: Optional[str]
@@ -33,7 +32,7 @@ class DirectoryLister(Resource):
         return os.listdir(self.directory)
 
 
-class FakeDuckDBIOManager(StructuredConfigIOManager):
+class FakeDuckDBIOManager(ConfigurableIOManager):
     """ Mostly fake DuckDB IO manager that appends partitioned data to a duckdb table """
 
     db_path: str
